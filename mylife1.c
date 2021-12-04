@@ -1,11 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h> // sleep()関数を使う
-#include "gol.h"
+//#include "gol.h"
 
 void my_init_cells(const int height, const int width, int cell[height][width], FILE* fp);
-//void my_print_cells(FILE* fp, int gen, const int height, const int width, int cell[height][width]);
-//void my_update_cells(const int height, const int width, int cell[height][width]);
+void my_print_cells(FILE* fp, int gen, const int height, const int width, int cell[height][width]);
+void my_update_cells(const int height, const int width, int cell[height][width]);
 
 int main(int argc, char **argv)
 {
@@ -40,14 +40,14 @@ int main(int argc, char **argv)
     my_init_cells(height, width, cell, NULL); // デフォルトの初期値を使う
   }
 
-  print_cells(fp, 0, height, width, cell); // 表示する
+  my_print_cells(fp, 0, height, width, cell); // 表示する
   sleep(1); // 1秒休止
   fprintf(fp,"\e[%dA",height+3);//height+3 の分、カーソルを上に戻す(壁2、表示部1)
 
   /* 世代を進める*/
   for (int gen = 1 ;; gen++) {
-    update_cells(height, width, cell); // セルを更新
-    print_cells(fp, gen, height, width, cell);  // 表示する
+    my_update_cells(height, width, cell); // セルを更新
+    my_print_cells(fp, gen, height, width, cell);  // 表示する
     sleep(1); //1秒休止する
     fprintf(fp,"\e[%dA",height+3);//height+3 の分、カーソルを上に戻す(壁2、表示部1)
   }
@@ -58,22 +58,124 @@ int main(int argc, char **argv)
 
 void my_init_cells(const int height, const int width, int cell[height][width], FILE* fp) {
     if (fp == NULL) {
-        cell[30][20] = 1;
-        cell[30][22] = 1;
-        cell[31][22] = 1;
-        cell[31][23] = 1;
-        cell[32][20] = 1;
+        cell[20][30] = 1;
+        cell[22][30] = 1;
+        cell[22][31] = 1;
+        cell[23][31] = 1;
+        cell[20][32] = 1;
     }
     else {
         int a, b;
         char bff[100];
         fgets(bff, 100, fp);
         while (fscanf(fp, "%d %d", &a, &b) != EOF) {
-            cell[a][b] = 1;
+            cell[b][a] = 1;
         }
     }
 
 
 }
 
-void print_cells(FILE *fp, int gen, const int height, const int width, int cell[height][width]);
+void my_print_cells(FILE *fp, int gen, const int height, const int width, int cell[height][width]) {
+    //上の壁
+    fprintf(fp,"generation = %d\n", gen); // この場合 (fp = stdout), printfと同じ
+    fprintf(fp,"+");
+    for (int x = 0 ; x < width ; x++) {
+        fprintf(fp, "-");
+    }
+    fprintf(fp, "+\n");
+    /* 外壁と 内側のゲーム部分 */
+    for (int y = 0; y < height; y++) {
+        fprintf(fp,"|");
+        for (int x = 0; x < width; x++) {
+            // ANSIエスケープコードを用いて、赤い"#" を表示
+            // \e[31m で 赤色に変更
+            // \e[0m でリセット（リセットしないと以降も赤くなる）
+            if(cell[y][x]){
+	            fprintf(fp, "\e[31m#\e[0m");
+            }
+            else{
+	            fprintf(fp, " ");
+            }
+        }
+        fprintf(fp,"|\n");
+    }
+
+    // 下の壁
+    fprintf(fp, "+");
+    for (int x = 0 ; x < width ; x++) {
+        fprintf(fp, "-");
+    }
+    fprintf(fp, "+\n");
+    
+    fflush(fp); // バッファされている文字列を出力する
+    return; // stdlib.h で定義されている実行成功を表す整数マクロ: 実体は0
+}
+
+void my_update_cells(const int height, const int width, int cell[height][width]) {
+    int cellnext[height][width];
+    for (int i=0; i<height; ++i) {
+        for (int j=0; j<width; ++j) {
+            int cnt = 0;
+            if (i-1>=0 && j-1>=0) {
+                if (cell[i-1][j-1] == 1) {
+                    ++cnt;
+                }
+                if (cell[i-1][j] == 1) {
+                    ++cnt;
+                }
+                if (cell[i][j-1] == 1) {
+                    ++cnt;
+                }
+            }
+            if (i-1>=0 && j+1<width) {
+                if (cell[i-1][j+1] == 1) {
+                    ++cnt;
+                }
+                if (cell[i][j+1] == 1) {
+                    ++cnt;
+                }
+            }
+            if (i+1<height && j-1>=0) {
+                if (cell[i+1][j-1] == 1) {
+                    ++cnt;
+                }
+                if (cell[i+1][j] == 1) {
+                    ++cnt;
+                }
+            }
+            if (i+1<height && j+1<width) {
+                if (cell[i+1][j+1] == 1) {
+                    ++cnt;
+                }
+            }
+            if (cnt == 3) {
+                cellnext[i][j] = 1;
+            }
+            else {
+                cellnext[i][j] = 0;
+            }
+            if (cell[i][j] == 1) {
+                if (cnt == 2 ||cnt == 3) {
+                    cellnext[i][j] = 1;
+                }
+                else{
+                    cellnext[i][j] = 0;
+                }
+            }
+            if (cell[i][j] == 0) {
+                if (cnt == 3) {
+                    cellnext[i][j] = 1;
+                }
+                else{
+                    cellnext[i][j] = 0;
+                }
+            }            
+        }
+    }
+    for (int i=0; i<height; ++i) {
+        for (int j=0; j<width; ++j) {
+            cell[i][j] = cellnext[i][j];
+        }
+    }    
+}
