@@ -3,6 +3,10 @@
 #include <unistd.h> // sleep()関数を使う
 #include "gol.h"
 
+void my_init_cells(const int height, const int width, int cell[height][width], FILE* fp);
+void my_print_cells(FILE* fp, int gen, const int height, const int width, int cell[height][width]);
+void my_update_cells(const int height, const int width, int cell[height][width]);
+
 int main(int argc, char **argv)
 {
   FILE *fp = stdout;

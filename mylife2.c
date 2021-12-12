@@ -7,10 +7,11 @@
 void my_init_cells(const int height, const int width, int cell[height][width], FILE* fp);
 void my_print_cells(FILE* fp, int gen, const int height, const int width, int cell[height][width]);
 void my_update_cells(const int height, const int width, int cell[height][width]);
+void my_update_file(int gen, const int height, const int width, int cell[height][width]);
 
 int main(int argc, char **argv)
 {
-  FILE *fp = stdout;
+  //FILE *fp = stdout;
   const int height = 40;
   const int width = 70;
 
@@ -41,16 +42,21 @@ int main(int argc, char **argv)
     my_init_cells(height, width, cell, NULL); // デフォルトの初期値を使う
   }
 
-  my_print_cells(fp, 0, height, width, cell); // 表示する
-  sleep(1); // 1秒休止
-  fprintf(fp,"\e[%dA",height+3);//height+3 の分、カーソルを上に戻す(壁2、表示部1)
+    //my_print_cells(fp, 0, height, width, cell); // 表示する
+    //sleep(1); // 1秒休止
+    //fprintf(fp,"\e[%dA",height+3);//height+3 の分、カーソルを上に戻す(壁2、表示部1)
 
   /* 世代を進める*/
-  for (int gen = 1 ;; gen++) {
+  int cnt = 100;
+  for (int gen = 1 ;gen<10000; gen++) {  
     my_update_cells(height, width, cell); // セルを更新
-    my_print_cells(fp, gen, height, width, cell);  // 表示する
-    sleep(1); //1秒休止する
-    fprintf(fp,"\e[%dA",height+3);//height+3 の分、カーソルを上に戻す(壁2、表示部1)
+    //my_print_cells(fp, gen, height, width, cell);  // 表示する
+    if(gen == cnt) {
+        cnt += 100;
+        my_update_file(gen, height, width, cell);
+    }
+    //sleep(1); //1秒休止する
+    //fprintf(fp,"\e[%dA",height+3);//height+3 の分、カーソルを上に戻す(壁2、表示部1)
   }
 
   return EXIT_SUCCESS;
@@ -95,50 +101,50 @@ void my_init_cells(const int height, const int width, int cell[height][width], F
 
 }
 
-void my_print_cells(FILE *fp, int gen, const int height, const int width, int cell[height][width]) {
-    int cnt = 0;
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            if (cell[y][x] == 1) {
-                ++cnt;
-            }
-        }
-    }
-    double ratio = 100 * (double)cnt/(height*width);
-    //上の壁
-    fprintf(fp,"generation = %d ratio = %.2f%%\n", gen, ratio); // この場合 (fp = stdout), printfと同じ
-    fprintf(fp,"+");
-    for (int x = 0 ; x < width ; x++) {
-        fprintf(fp, "-");
-    }
-    fprintf(fp, "+\n");
-    /* 外壁と 内側のゲーム部分 */
-    for (int y = 0; y < height; y++) {
-        fprintf(fp,"|");
-        for (int x = 0; x < width; x++) {
-            // ANSIエスケープコードを用いて、赤い"#" を表示
-            // \e[31m で 赤色に変更
-            // \e[0m でリセット（リセットしないと以降も赤くなる）
-            if(cell[y][x]){
-	            fprintf(fp, "\e[31m#\e[0m");
-            }
-            else{
-	            fprintf(fp, " ");
-            }
-        }
-        fprintf(fp,"|\n");
-    }
+// void my_print_cells(FILE *fp, int gen, const int height, const int width, int cell[height][width]) {
+//     int cnt = 0;
+//     for (int y = 0; y < height; ++y) {
+//         for (int x = 0; x < width; ++x) {
+//             if (cell[y][x] == 1) {
+//                 ++cnt;
+//             }
+//         }
+//     }
+//     double ratio = 100 * (double)cnt/(height*width);
+//     //上の壁
+//     fprintf(fp,"generation = %d ratio = %.2f%%\n", gen, ratio); // この場合 (fp = stdout), printfと同じ
+//     fprintf(fp,"+");
+//     for (int x = 0 ; x < width ; x++) {
+//         fprintf(fp, "-");
+//     }
+//     fprintf(fp, "+\n");
+//     /* 外壁と 内側のゲーム部分 */
+//     for (int y = 0; y < height; y++) {
+//         fprintf(fp,"|");
+//         for (int x = 0; x < width; x++) {
+//             // ANSIエスケープコードを用いて、赤い"#" を表示
+//             // \e[31m で 赤色に変更
+//             // \e[0m でリセット（リセットしないと以降も赤くなる）
+//             if(cell[y][x]){
+// 	            fprintf(fp, "\e[31m#\e[0m");
+//             }
+//             else{
+// 	            fprintf(fp, " ");
+//             }
+//         }
+//         fprintf(fp,"|\n");
+//     }
 
-    // 下の壁
-    fprintf(fp, "+");
-    for (int x = 0 ; x < width ; x++) {
-        fprintf(fp, "-");
-    }
-    fprintf(fp, "+\n");
+//     // 下の壁
+//     fprintf(fp, "+");
+//     for (int x = 0 ; x < width ; x++) {
+//         fprintf(fp, "-");
+//     }
+//     fprintf(fp, "+\n");
     
-    fflush(fp); // バッファされている文字列を出力する
-    return; // stdlib.h で定義されている実行成功を表す整数マクロ: 実体は0
-}
+//     fflush(fp); // バッファされている文字列を出力する
+//     return; // stdlib.h で定義されている実行成功を表す整数マクロ: 実体は0
+// }
 
 void my_update_cells(const int height, const int width, int cell[height][width]) {
     int cellnext[height][width];
@@ -206,4 +212,19 @@ void my_update_cells(const int height, const int width, int cell[height][width])
             cell[i][j] = cellnext[i][j];
         }
     }    
+}
+
+void my_update_file(int gen, const int height, const int width, int cell[height][width]) {
+    FILE *fp;
+    char filename[100];
+    sprintf(filename, "gen%04d.lif", gen);
+    fp=fopen(filename, "w");
+    fprintf(fp, "#Life 1.06\n");
+    for (int i=0; i<height; ++i) {
+        for (int j=0; j<width; ++j) {
+            if(cell[i][j]==1) {
+                fprintf(fp, "%d %d\n", j, i);
+            }
+        }
+    }
 }
