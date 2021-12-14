@@ -155,9 +155,13 @@ void my_update_cells(const int height, const int width, int cell[height][width])
                 if (cell[i-1][j-1] == 1) {
                     ++cnt;
                 }
+            }
+            if (i-1>=0) {
                 if (cell[i-1][j] == 1) {
                     ++cnt;
                 }
+            }
+            if (j-1>=0){
                 if (cell[i][j-1] == 1) {
                     ++cnt;
                 }
@@ -165,29 +169,27 @@ void my_update_cells(const int height, const int width, int cell[height][width])
             if (i-1>=0 && j+1<width) {
                 if (cell[i-1][j+1] == 1) {
                     ++cnt;
-                }
-                if (cell[i][j+1] == 1) {
-                    ++cnt;
-                }
+                }  
             }
             if (i+1<height && j-1>=0) {
                 if (cell[i+1][j-1] == 1) {
                     ++cnt;
-                }
-                if (cell[i+1][j] == 1) {
-                    ++cnt;
-                }
+                }  
             }
             if (i+1<height && j+1<width) {
                 if (cell[i+1][j+1] == 1) {
                     ++cnt;
                 }
             }
-            if (cnt == 3) {
-                cellnext[i][j] = 1;
+            if (j+1<width) {
+                if (cell[i][j+1] == 1) {
+                ++cnt;
+                }
             }
-            else {
-                cellnext[i][j] = 0;
+            if(i+1<height){
+                if (cell[i+1][j] == 1) {
+                    ++cnt;
+                }
             }
             if (cell[i][j] == 1) {
                 if (cnt == 2 ||cnt == 3) {

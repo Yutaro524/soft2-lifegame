@@ -14,7 +14,7 @@ void my_init_RLE_cells(const int height, const int width,int cell[height][width]
 
 int main(int argc, char **argv)
 {
-  //FILE *fp = stdout;
+  FILE *fp = stdout;
   const int height = 40;
   const int width = 70;
 
@@ -33,15 +33,18 @@ int main(int argc, char **argv)
   else if (argc == 2) {
     FILE *lgfile;
     if ( (lgfile = fopen(argv[1],"r")) != NULL ) {
-        char c = fgetc(lgfile);
-        // char buff2[100] = "#Life 1.06";
-        char buff3[100];
-        fgets(buff3,100, lgfile);
-        if (c == '#') {
+        char buff[100];
+        char buff2[100] = "#Life 1.06\n";
+        fgets(buff, 100, lgfile);
+        if (strcmp(buff, buff2) == 0) {
             //fprintf(stderr,"OK!\n");
             my_init_cells(height,width,cell,lgfile);
         }
-        else if(c == 'x') {
+        else if(buff[0] == '#' || buff[0] == 'x'){
+            while (buff[0] == '#') {
+                fgets(buff, 100, lgfile);
+                // printf("sentou: %c\n", buff[0]);
+            }
             my_init_RLE_cells(height,width,cell,lgfile);
         } else {
             assert(0 == 1);  
@@ -58,21 +61,21 @@ int main(int argc, char **argv)
     my_init_cells(height, width, cell, NULL); // デフォルトの初期値を使う
   }
 
-    //my_print_cells(fp, 0, height, width, cell); // 表示する
-    //sleep(1); // 1秒休止
-    //fprintf(fp,"\e[%dA",height+3);//height+3 の分、カーソルを上に戻す(壁2、表示部1)
+    my_print_cells(fp, 0, height, width, cell); // 表示する
+    sleep(1); // 1秒休止
+    fprintf(fp,"\e[%dA",height+3);//height+3 の分、カーソルを上に戻す(壁2、表示部1)
 
   /* 世代を進める*/
   int cnt = 100;
   for (int gen = 1 ;gen<10000; gen++) {  
     my_update_cells(height, width, cell); // セルを更新
-    //my_print_cells(fp, gen, height, width, cell);  // 表示する
+    my_print_cells(fp, gen, height, width, cell);  // 表示する
     if(gen == cnt) {
         cnt += 100;
         my_update_file(gen, height, width, cell);
     }
-    //sleep(1); //1秒休止する
-    //fprintf(fp,"\e[%dA",height+3);//height+3 の分、カーソルを上に戻す(壁2、表示部1)
+    sleep(1); //1秒休止する
+    fprintf(fp,"\e[%dA",height+3);//height+3 の分、カーソルを上に戻す(壁2、表示部1)
   }
 
   return EXIT_SUCCESS;
@@ -113,8 +116,6 @@ void my_init_cells(const int height, const int width, int cell[height][width], F
             cell[b][a] = 1;
         }
     }
-
-
 }
 
 void my_print_cells(FILE *fp, int gen, const int height, const int width, int cell[height][width]) {
@@ -171,9 +172,13 @@ void my_update_cells(const int height, const int width, int cell[height][width])
                 if (cell[i-1][j-1] == 1) {
                     ++cnt;
                 }
+            }
+            if (i-1>=0) {
                 if (cell[i-1][j] == 1) {
                     ++cnt;
                 }
+            }
+            if (j-1>=0){
                 if (cell[i][j-1] == 1) {
                     ++cnt;
                 }
@@ -181,29 +186,27 @@ void my_update_cells(const int height, const int width, int cell[height][width])
             if (i-1>=0 && j+1<width) {
                 if (cell[i-1][j+1] == 1) {
                     ++cnt;
-                }
-                if (cell[i][j+1] == 1) {
-                    ++cnt;
-                }
+                }  
             }
             if (i+1<height && j-1>=0) {
                 if (cell[i+1][j-1] == 1) {
                     ++cnt;
-                }
-                if (cell[i+1][j] == 1) {
-                    ++cnt;
-                }
+                }  
             }
             if (i+1<height && j+1<width) {
                 if (cell[i+1][j+1] == 1) {
                     ++cnt;
                 }
             }
-            if (cnt == 3) {
-                cellnext[i][j] = 1;
+            if (j+1<width) {
+                if (cell[i][j+1] == 1) {
+                ++cnt;
+                }
             }
-            else {
-                cellnext[i][j] = 0;
+            if(i+1<height){
+                if (cell[i+1][j] == 1) {
+                    ++cnt;
+                }
             }
             if (cell[i][j] == 1) {
                 if (cnt == 2 ||cnt == 3) {
