@@ -194,17 +194,22 @@ void my_init_cells(const int height, const int width, int cell[height][width], F
 }
 
 void my_print_cells(FILE *fp, int gen, const int height, const int width, int cell[height][width]) {
-    int cnt = 0;
+    int deer = 0;
+    int lion = 0;
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             if (cell[y][x] == 1) {
-                ++cnt;
+                ++deer;
+            }
+            else if (cell[y][x] == -1) {
+                ++lion;
             }
         }
     }
-    double ratio = 100 * (double)cnt/(height*width);
+    double ratio_deer = 100 * (double)deer/(height*width);
+    double ratio_lion = 100 * (double)lion/(height*width);
     //上の壁
-    fprintf(fp,"generation = %d ratio = %.2f%%\n", gen, ratio); // この場合 (fp = stdout), printfと同じ
+    fprintf(fp,"generation = %d deer = %.2f%% lion = %.2f%%\n", gen, ratio_deer, ratio_lion); // この場合 (fp = stdout), printfと同じ
     fprintf(fp,"+");
     for (int x = 0 ; x < width ; x++) {
         fprintf(fp, "-");
@@ -312,7 +317,10 @@ void my_update_cells(const int height, const int width, int cell[height][width])
                 }
             }
             if (cell[i][j] == 1) {
-                if (cnt1 == 2 ||cnt1 == 3) {
+                if (cnt2 >= 1) {    //敵がいる
+                    cellnext[i][j] = 0;
+                }
+                else if (cnt1 == 2) {
                     cellnext[i][j] = 1;
                 }
                 else{
@@ -320,7 +328,7 @@ void my_update_cells(const int height, const int width, int cell[height][width])
                 }
             }
             if (cell[i][j] == -1) {
-                if (cnt2 == 2 ||cnt2 == 3) {
+                if (cnt1 >= 2 && cnt2<=1) {   //えさがあり、同種が少ない
                     cellnext[i][j] = -1;
                 }
                 else{
@@ -328,19 +336,13 @@ void my_update_cells(const int height, const int width, int cell[height][width])
                 }
             }
             if (cell[i][j] == 0) {
-                if (cnt1 == 3 && cnt2 == 3) {
-                    int c  = rand() % 2;
-                    if(c == 0) {
-                        cellnext[i][j] = 1;
-                    }
-                    else {
-                        cellnext[i][j] = -1;
-                    }
+                if (cnt1 >=3 && cnt2 == 2) {
+                    cellnext[i][j] = -1;    //捕食者有利
                 }
-                else if (cnt1 == 3){
+                else if (cnt1 == 2){
                     cellnext[i][j] = 1;
                 }
-                else if (cnt2 == 3){
+                else if (cnt2 == 2){
                     cellnext[i][j] = -1;
                 }
                 else {
